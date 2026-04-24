@@ -9,13 +9,13 @@ import streamlit as st
 import myfuncs
 
 
-# ---------------- LABELS ----------------
+# ---------------- LABELS (FIXED: 27 ONLY) ----------------
 GE_taxonomy = [
     "admiration","amusement","anger","annoyance","approval","caring",
     "confusion","curiosity","desire","disappointment","disapproval",
     "disgust","embarrassment","excitement","fear","gratitude","grief",
     "joy","love","nervousness","optimism","pride","realization",
-    "relief","remorse","sadness","surprise","neutral"
+    "relief","remorse","sadness","surprise"
 ]
 
 
@@ -54,8 +54,6 @@ mapping_emotions = {
 
 # ---------------- MODEL FILE ----------------
 MODEL_PATH = "bert-weights.hdf5"
-
-# ✅ YOUR GOOGLE DRIVE FILE ID
 FILE_ID = "1X1LNquCDHskDyKD0WlsdhrSSpbWmpzEr"
 
 
@@ -87,15 +85,16 @@ def predict_sample(text_sample, model, tokenizer, threshold=0.87):
     ]
     sample_probas = [p for p in sample_probas if p > threshold]
 
+    # ✅ Neutral fallback
     if len(sample_labels) == 0:
+        best_label = "neutral"
         sample_labels = ["neutral"]
         sample_probas = [0]
-        best_label = "neutral"
 
     return sample_labels, sample_probas, best_label
 
 
-# ---------------- LOAD MODEL ----------------
+# ---------------- MODEL ----------------
 @st.cache_resource
 def load_full_model(nb_labels):
 
@@ -124,7 +123,7 @@ def load_full_model(nb_labels):
 
     model = Model(inputs=inputs, outputs=outputs)
 
-    # ✅ Load weights
+    # ✅ load weights (now matches 27 labels)
     model.load_weights(MODEL_PATH)
 
     return model
