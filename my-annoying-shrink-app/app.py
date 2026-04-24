@@ -1,5 +1,5 @@
 import numpy as np
-from transformers import TFBertModel, BertTokenizerFast, BertConfig
+from transformers import TFBertModel, BertTokenizerFast
 from tensorflow.keras.layers import Input, Dropout, Dense
 from tensorflow.keras.models import Model
 from tensorflow.keras.initializers import TruncatedNormal
@@ -72,19 +72,15 @@ def predict_sample(text_sample, model, tokenizer, threshold=0.87):
     return sample_labels, sample_probas, best_label
 
 
-# ---------------- MODEL ----------------
-config = BertConfig.from_pretrained('bert-base-uncased')
-tokenizer = BertTokenizerFast.from_pretrained('bert-base-uncased')
-
-
+# ---------------- MODEL LOAD (FIXED CACHE) ----------------
 @st.cache_resource
-def create_model(nb_labels, max_length=48):
+def load_full_model(nb_labels):
 
-    bert = TFBertModel.from_pretrained('bert-base-uncased', config=config)
+    bert = TFBertModel.from_pretrained('bert-base-uncased')
 
-    input_ids = Input(shape=(max_length,), name='input_ids', dtype='int32')
-    attention_mask = Input(shape=(max_length,), name='attention_mask', dtype='int32')
-    token_type_ids = Input(shape=(max_length,), name='token_type_ids', dtype='int32')
+    input_ids = Input(shape=(48,), name='input_ids', dtype='int32')
+    attention_mask = Input(shape=(48,), name='attention_mask', dtype='int32')
+    token_type_ids = Input(shape=(48,), name='token_type_ids', dtype='int32')
 
     inputs = {
         'input_ids': input_ids,
@@ -98,23 +94,22 @@ def create_model(nb_labels, max_length=48):
     x = Dropout(0.3)(pooled_output)
 
     outputs = Dense(
-        units=nb_labels,
+        nb_labels,
         activation="sigmoid",
-        kernel_initializer=TruncatedNormal(stddev=config.initializer_range)
+        kernel_initializer=TruncatedNormal(stddev=0.02)
     )(x)
 
     model = Model(inputs=inputs, outputs=outputs)
+
+    # ✅ Load weights safely
+    model.load_weights("bert-weights.hdf5")
+
     return model
 
 
-@st.cache_resource
-def load_model_weights(model):
-    model.load_weights("bert-weights.hdf5")  # ⚠️ keep file in same folder
-    return model
-
-
-model = create_model(len(GE_taxonomy))
-model = load_model_weights(model)
+# ---------------- LOAD TOKENIZER + MODEL ----------------
+tokenizer = BertTokenizerFast.from_pretrained('bert-base-uncased')
+model = load_full_model(len(GE_taxonomy))
 
 
 # ---------------- UI ----------------
