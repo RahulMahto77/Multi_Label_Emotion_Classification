@@ -23,32 +23,32 @@ GE_taxonomy = [
 
 # ================= EMOJI MAP =================
 mapping_emotions = {
-    "admiration": ["🤩", "You always admire what you really don't understand."],
-    "amusement": ["🥳", "The unfortunate who has to travel for amusement lacks capacity for amusement."],
-    "anger": ["😡", "Bitterness is like fire. It burns it all clean."],
+    "admiration": ["🤩", "You admire what you don’t understand."],
+    "amusement": ["🥳", "Amusement unlocked!"],
+    "anger": ["😡", "Anger burns like fire."],
     "annoyance": ["😤", "It could be worse."],
-    "approval": ["👍", "A man cannot be comfortable without his own approval."],
-    "caring": ["😘", "The road to hell is paved with good intentions."],
-    "confusion": ["🤨", "It's ok to be confused, but know why..."],
-    "curiosity": ["🤔", "The cure for boredom is curiosity."],
-    "desire": ["🤤", "From desire comes hate."],
-    "disappointment": ["😔", "Grass is always greener."],
-    "disapproval": ["🙄", "Don't judge a book by its cover."],
-    "disgust": ["🤮", "Some people are beautifully wrapped boxes of sh*t."],
-    "embarrassment": ["😳", "Shame is a soul eating emotion."],
-    "excitement": ["😆", "Excitement always leads to tears."],
-    "fear": ["😱", "Limits are often illusions."],
-    "gratitude": ["🙏", "Gratitude is powerful."],
-    "grief": ["🥀", "All good things end."],
-    "joy": ["😊", "Everything is fine 🙂"],
-    "love": ["😍", "Love turns into everything."],
-    "nervousness": ["😬", "Anxiety mode on."],
-    "optimism": ["💪", "Hope for the best."],
-    "pride": ["😎", "Among the blind, one-eyed is king."],
-    "realization": ["🏁", "Don’t blow your own trumpet."],
-    "relief": ["😮‍💨", "Phewwww"],
-    "remorse": ["😞", "You can’t undo mistakes."],
-    "sadness": ["😭", "It’s okay to feel sad."],
+    "approval": ["👍", "Self-approval matters."],
+    "caring": ["🥰", "Care is powerful."],
+    "confusion": ["🤨", "It's okay to be confused."],
+    "curiosity": ["🤔", "Curiosity drives learning."],
+    "desire": ["🤤", "Strong desire detected."],
+    "disappointment": ["😔", "Expectations not met."],
+    "disapproval": ["🙄", "Not impressed."],
+    "disgust": ["🤢", "Disgust detected."],
+    "embarrassment": ["😳", "Embarrassment moment."],
+    "excitement": ["😆", "Excited energy!"],
+    "fear": ["😱", "Fear detected."],
+    "gratitude": ["🙏", "Be grateful always."],
+    "grief": ["🥀", "Loss detected."],
+    "joy": ["😊", "Happiness detected."],
+    "love": ["😍", "Love is in the air."],
+    "nervousness": ["😬", "Feeling nervous."],
+    "optimism": ["💪", "Stay positive."],
+    "pride": ["😎", "Proud moment."],
+    "realization": ["💡", "Realization hit."],
+    "relief": ["😮‍💨", "Relief achieved."],
+    "remorse": ["😞", "Regret detected."],
+    "sadness": ["😭", "Sadness detected."],
     "surprise": ["😮", "Surprise!"],
     "neutral": ["😐", "Neutral state"]
 }
@@ -61,9 +61,9 @@ def predict_sample(text, model, tokenizer, threshold=0.85):
     sample = myfuncs.tokenize(tokenizer, text)
 
     probs = model.predict(sample, verbose=0)[0]
-    probs = probs.tolist()
 
     labels = [1 if p > threshold else 0 for p in probs]
+
     best_label = GE_taxonomy[int(np.argmax(probs))]
 
     detected = [GE_taxonomy[i] for i, v in enumerate(labels) if v == 1]
@@ -80,6 +80,7 @@ def predict_sample(text, model, tokenizer, threshold=0.85):
 # ================= MODEL =================
 @st.cache_resource
 def create_model():
+
     config = BertConfig.from_pretrained("bert-base-uncased")
 
     bert = TFBertModel.from_pretrained("bert-base-uncased", config=config)
@@ -87,12 +88,20 @@ def create_model():
     input_ids = Input(shape=(48,), dtype="int32", name="input_ids")
     attention_mask = Input(shape=(48,), dtype="int32", name="attention_mask")
 
-    bert_output = bert(input_ids=input_ids, attention_mask=attention_mask)
-    pooled = bert_output.pooler_output
+    bert_output = bert(
+        input_ids=input_ids,
+        attention_mask=attention_mask
+    )
 
-    x = Dropout(0.3)(pooled)
-    output = Dense(27, activation="sigmoid",
-                   kernel_initializer=TruncatedNormal(stddev=config.initializer_range))(x)
+    pooled_output = bert_output.pooler_output
+
+    x = Dropout(0.3)(pooled_output)
+
+    output = Dense(
+        27,
+        activation="sigmoid",
+        kernel_initializer=TruncatedNormal(stddev=config.initializer_range)
+    )(x)
 
     model = Model(inputs=[input_ids, attention_mask], outputs=output)
 
@@ -109,15 +118,14 @@ def load_model(model):
 st.set_page_config(page_title="My Annoying Shrink", layout="centered")
 
 st.title("🧠 My Annoying Shrink")
-st.write("Type your feelings and I will analyze your emotions 😄")
-
+st.write("Enter text and detect emotions")
 
 tokenizer = BertTokenizerFast.from_pretrained("bert-base-uncased")
 
 model = create_model()
 model = load_model(model)
 
-user_text = st.text_input("Enter your text here:")
+user_text = st.text_input("Enter your text")
 
 if user_text:
 
@@ -127,6 +135,7 @@ if user_text:
     st.write(mapping_emotions[best][1])
 
     if st.button("Show emotions"):
+
         st.subheader("Detected emotions")
 
         for e, p in zip(emotions, probs):
