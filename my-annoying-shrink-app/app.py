@@ -1,7 +1,9 @@
 import os
+import requests
 import numpy as np
 import streamlit as st
 import tensorflow as tf
+
 from transformers import TFBertModel, BertTokenizerFast
 from tensorflow.keras.layers import Input, Dropout, Dense
 from tensorflow.keras.models import Model
@@ -9,7 +11,7 @@ from tensorflow.keras.initializers import TruncatedNormal
 
 import myfuncs
 
-st.set_page_config(page_title="My Annoying Shrink", layout="centered")
+st.set_page_config(page_title="Emotion Detector", layout="centered")
 
 # ---------------- EMOTIONS ---------------- #
 GE_taxonomy = [
@@ -21,35 +23,23 @@ GE_taxonomy = [
 ]
 
 mapping_emotions = {
-  "admiration":["🤩","You always admire what you really don't understand."],
-  "amusement":["🥳","The unfortunate who has to travel for amusement lacks capacity for amusement."], 
-  "anger":["😡","Bitterness is like cancer. It eats upon the host."], 
-  "annoyance":["😤","It could be worse."], 
-  "approval":["👍","A man cannot be comfortable without his own approval."], 
-  "caring":["😘","Good intentions matter."], 
-  "confusion":["🤔","It's ok to be confused."], 
-  "curiosity":["🧐","Curiosity drives growth."], 
-  "desire":["🤤","Desire shapes direction."], 
-  "disappointment":["😞","Things don't always go as planned."], 
-  "disapproval":["🙄","Not everything deserves approval."], 
-  "disgust":["🤢","Some things are just unpleasant."], 
-  "embarrassment":["😳","It happens to everyone."], 
-  "excitement":["😆","Excitement brings energy."], 
-  "fear":["😱","Fear is often illusion."], 
-  "gratitude":["🙏","Gratitude changes mindset."], 
-  "grief":["🖤","Time heals gradually."], 
-  "joy":["😊","Keep smiling."],
-  "love":["😍","Love makes life meaningful."], 
-  "nervousness":["😬","Stay calm, breathe."], 
-  "optimism":["💪","Hope is powerful."], 
-  "pride":["😎","Be proud but humble."], 
-  "realization":["🥇","Understanding comes with time."], 
-  "relief":["😌","Peace finally."], 
-  "remorse":["😔","Learn and move forward."], 
-  "sadness":["😢","This too shall pass."], 
-  "surprise":["😮","Unexpected things happen."], 
-  "neutral":["😐","Just normal state."]
+    emo: ["🙂", f"You are feeling {emo}"] for emo in GE_taxonomy
 }
+
+# ---------------- DOWNLOAD WEIGHTS ---------------- #
+def download_weights():
+    url = "https://media.githubusercontent.com/media/RahulMahto77/Multi_Label_Emotion_Classification/main/bert-weights.hdf5"
+    path = "bert-weights.hdf5"
+
+    if not os.path.exists(path):
+        st.info("⬇️ Downloading model weights (first time only)...")
+        try:
+            r = requests.get(url)
+            with open(path, "wb") as f:
+                f.write(r.content)
+            st.success("✅ Weights downloaded")
+        except:
+            st.warning("⚠️ Could not download weights. Running without them.")
 
 # ---------------- TOKENIZER ---------------- #
 tokenizer = BertTokenizerFast.from_pretrained("bert-base-uncased")
@@ -73,14 +63,15 @@ def create_model():
 # ---------------- LOAD MODEL ---------------- #
 @st.cache_resource
 def load_model():
+    download_weights()
+
     model = create_model()
 
-    path = os.path.join(os.path.dirname(__file__), "bert-weights.hdf5")
-
-    if os.path.exists(path):
-        model.load_weights(path)
+    if os.path.exists("bert-weights.hdf5"):
+        model.load_weights("bert-weights.hdf5")
+        st.success("✅ Model loaded with trained weights")
     else:
-        st.warning("⚠️ No trained weights found → random predictions")
+        st.warning("⚠️ Running with base BERT (random predictions)")
 
     return model
 
@@ -106,14 +97,14 @@ def predict(text):
     inputs = tokenize(text)
 
     probs = model.predict(inputs, verbose=0)[0]
-
     best = GE_taxonomy[int(np.argmax(probs))]
+
     return probs, best
 
 # ---------------- UI ---------------- #
-st.title("🧠 My Annoying Shrink")
+st.title("🧠 Emotion Detector")
 
-text = st.text_input("How are you feeling today?")
+text = st.text_input("Enter your text")
 
 if text:
     probs, best = predict(text)
