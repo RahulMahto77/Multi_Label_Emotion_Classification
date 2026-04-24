@@ -10,11 +10,13 @@ import myfuncs
 
 
 # ---------------- LABELS ----------------
-GE_taxonomy = ["admiration", "amusement", "anger", "annoyance", "approval", "caring", 
-                "confusion", "curiosity", "desire", "disappointment", "disapproval", 
-                "disgust", "embarrassment", "excitement", "fear", "gratitude", "grief", 
-                "joy", "love", "nervousness", "optimism", "pride", "realization", 
-                "relief", "remorse", "sadness", "surprise", "neutral"]
+GE_taxonomy = [
+    "admiration","amusement","anger","annoyance","approval","caring",
+    "confusion","curiosity","desire","disappointment","disapproval",
+    "disgust","embarrassment","excitement","fear","gratitude","grief",
+    "joy","love","nervousness","optimism","pride","realization",
+    "relief","remorse","sadness","surprise","neutral"
+]
 
 
 # ---------------- EMOTION MAPPING ----------------
@@ -50,17 +52,22 @@ mapping_emotions = {
 }
 
 
-# ---------------- DOWNLOAD MODEL (NEW FIX) ----------------
+# ---------------- MODEL FILE ----------------
 MODEL_PATH = "bert-weights.hdf5"
 
-# 🔥 PUT YOUR GOOGLE DRIVE FILE ID HERE
-FILE_ID = "https://drive.google.com/file/d/1X1LNquCDHskDyKD0WlsdhrSSpbWmpzEr/view?usp=sharing"
+# ✅ YOUR GOOGLE DRIVE FILE ID
+FILE_ID = "1X1LNquCDHskDyKD0WlsdhrSSpbWmpzEr"
 
+
+# ---------------- DOWNLOAD MODEL ----------------
 @st.cache_resource
 def download_weights():
     if not os.path.exists(MODEL_PATH):
-        url = f"https://drive.google.com/uc?id={FILE_ID}"
-        gdown.download(url, MODEL_PATH, quiet=False)
+        gdown.download(
+            id=FILE_ID,
+            output=MODEL_PATH,
+            quiet=False
+        )
 
 
 # ---------------- PREDICTION ----------------
@@ -72,11 +79,12 @@ def predict_sample(text_sample, model, tokenizer, threshold=0.87):
     sample_probas = model.predict(sample)
     sample_probas = sample_probas.ravel().tolist()
 
-    sample_labels = [1 if (p > threshold) else 0 for p in sample_probas]
     best_idx = np.argmax(sample_probas)
     best_label = GE_taxonomy[best_idx]
 
-    sample_labels = [GE_taxonomy[i] for i in range(len(sample_labels)) if sample_labels[i]==1]
+    sample_labels = [
+        GE_taxonomy[i] for i, p in enumerate(sample_probas) if p > threshold
+    ]
     sample_probas = [p for p in sample_probas if p > threshold]
 
     if len(sample_labels) == 0:
@@ -87,7 +95,7 @@ def predict_sample(text_sample, model, tokenizer, threshold=0.87):
     return sample_labels, sample_probas, best_label
 
 
-# ---------------- MODEL LOAD ----------------
+# ---------------- LOAD MODEL ----------------
 @st.cache_resource
 def load_full_model(nb_labels):
 
@@ -122,8 +130,8 @@ def load_full_model(nb_labels):
     return model
 
 
-# ---------------- LOAD EVERYTHING ----------------
-download_weights()   # 🔥 ensures model file exists
+# ---------------- INIT ----------------
+download_weights()
 tokenizer = BertTokenizerFast.from_pretrained('bert-base-uncased')
 model = load_full_model(len(GE_taxonomy))
 
