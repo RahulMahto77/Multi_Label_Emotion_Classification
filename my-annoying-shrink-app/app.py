@@ -1,4 +1,6 @@
 import numpy as np
+import os
+import gdown
 from transformers import TFBertModel, BertTokenizerFast
 from tensorflow.keras.layers import Input, Dropout, Dense
 from tensorflow.keras.models import Model
@@ -48,6 +50,19 @@ mapping_emotions = {
 }
 
 
+# ---------------- DOWNLOAD MODEL (NEW FIX) ----------------
+MODEL_PATH = "bert-weights.hdf5"
+
+# 🔥 PUT YOUR GOOGLE DRIVE FILE ID HERE
+FILE_ID = "https://drive.google.com/file/d/1X1LNquCDHskDyKD0WlsdhrSSpbWmpzEr/view?usp=sharing"
+
+@st.cache_resource
+def download_weights():
+    if not os.path.exists(MODEL_PATH):
+        url = f"https://drive.google.com/uc?id={FILE_ID}"
+        gdown.download(url, MODEL_PATH, quiet=False)
+
+
 # ---------------- PREDICTION ----------------
 def predict_sample(text_sample, model, tokenizer, threshold=0.87):
 
@@ -72,7 +87,7 @@ def predict_sample(text_sample, model, tokenizer, threshold=0.87):
     return sample_labels, sample_probas, best_label
 
 
-# ---------------- MODEL LOAD (FIXED CACHE) ----------------
+# ---------------- MODEL LOAD ----------------
 @st.cache_resource
 def load_full_model(nb_labels):
 
@@ -101,13 +116,14 @@ def load_full_model(nb_labels):
 
     model = Model(inputs=inputs, outputs=outputs)
 
-    # ✅ Load weights safely
-    model.load_weights("bert-weights.hdf5")
+    # ✅ Load weights
+    model.load_weights(MODEL_PATH)
 
     return model
 
 
-# ---------------- LOAD TOKENIZER + MODEL ----------------
+# ---------------- LOAD EVERYTHING ----------------
+download_weights()   # 🔥 ensures model file exists
 tokenizer = BertTokenizerFast.from_pretrained('bert-base-uncased')
 model = load_full_model(len(GE_taxonomy))
 
