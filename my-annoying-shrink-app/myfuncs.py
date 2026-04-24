@@ -3,7 +3,7 @@ import contractions
 import emoji
 
 
-# Text processing
+# Text preprocessing
 def preprocess_corpus(x):
     
     x = re.sub(r'([a-zA-Z\[\]])([,;.!?])', r'\1 \2', x)
@@ -13,12 +13,10 @@ def preprocess_corpus(x):
     x = contractions.fix(x)
     x = x.lower()
 
-    # (keeping your cleaning same...)
-    x = re.sub(r"lmao", "laughing my ass off", x)
-    x = re.sub(r"\b(tho)\b", "though", x)
     x = re.sub(r"\b(idk)\b", "i do not know", x)
+    x = re.sub(r"\b(tho)\b", "though", x)
+    x = re.sub(r"\b(lmao)\b", "laughing my ass off", x)
 
-    # Remove unwanted chars
     x = re.sub(r"[^A-Za-z!?_]+"," ", x)
     x = re.sub(r" +"," ", x)
     x = x.strip()
@@ -39,11 +37,8 @@ def tokenize(tokenizer, text_samples):
         return_attention_mask=True
     )
 
-    # ✅ FIX: correct key name
-    samples = {
+    return {
         'input_ids': sample_token['input_ids'],
         'attention_mask': sample_token['attention_mask'],
-        'token_type_ids': sample_token['token_type_ids']
+        'token_type_ids': sample_token['token_type_ids']  # ✅ FIXED
     }
-
-    return samples
