@@ -5,3 +5,4 @@ numpy==1.23.5
 Pillow==10.0.0
 contractions==0.1.73
 emoji==2.8.0
+gdown==5.2.0
