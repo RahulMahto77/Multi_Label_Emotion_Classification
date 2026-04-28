@@ -19,7 +19,7 @@ However, this dataset presents several challenges:
  - **Class imbalance**: ~30% of "neutral" samples
  - **Multi-label**: each sample can be labeled with up to 5 different emotions
 
-### 1_EDA_Preprocessing.ipynb
+### Final_year_project.ipynb
  **Exploration and cleaning of the data in preparation for multi-label text classification tasks**
  
  - Input files
@@ -32,7 +32,7 @@ However, this dataset presents several challenges:
 	 - val_clean.csv: clean validation dataset
 	 - test_clean.csv: clean test dataset
 
-### 2_Baseline_Modeling.ipynb
+### Baseline_Modeling.ipynb
  **Creating baseline models for emotion detection**
  
  - Input files
@@ -41,7 +41,7 @@ However, this dataset presents several challenges:
 	 - test_clean.csv: clean test dataset
 	 - emotions.txt: list of emotions in the GoEmotions taxonomy
 
-###  4_BERT_Model_2.ipynb
+###  BERT_Model.ipynb
  **Fine-tuning a BERT model for emotion detection (without "neutral" samples) **
  
  - Input files
